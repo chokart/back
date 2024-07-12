@@ -18,6 +18,12 @@ const bookSchema = mongoose.Schema(
             required: true,
         },
 
+        imagePublicId: {
+            type: String,
+            required: true,
+        },
+
+
         description: {
             type: String,
             required: true,
