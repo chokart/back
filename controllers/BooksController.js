@@ -12,14 +12,15 @@ export const SaveBook = async (request, response) => {
             // Subir la imagen a Cloudinary
             const result = await cloudinary.uploader.upload(file.path);
 
-            // Crear el nuevo libro con la URL de la imagen en Cloudinary
+            // Crear el nuevo libro con la URL y el public_id de la imagen en Cloudinary
             const newBook = new Book({
                 title: title,
-                cel:cel,
+                cel: cel,
                 description: description,
                 price: price,
                 categoria: categoria,
-                imagen: result.secure_url
+                imagen: result.secure_url,
+                imagePublicId: result.public_id // Guardar el public_id
             });
 
             // Guardar el libro en la base de datos
@@ -61,31 +62,34 @@ const validar = (title, cel, description, price, categoria, img, sevalida) => {
     return errors;
 };
 
-
 export const getBooks = async (request, response) => {
     try {
-        const { id } = request.params
+        const { id } = request.params;
         const rows =
-            (id === undefined) ? await Book.find() : await Book.findById(id)
-        return response.status(200).json({ status: true, data: rows })
-
+            (id === undefined) ? await Book.find() : await Book.findById(id);
+        return response.status(200).json({ status: true, data: rows });
     } catch (error) {
-        return response.status(500).json({ status: false, errors: [error] })
-
+        return response.status(500).json({ status: false, errors: [error] });
     }
-}
+};
 
-
-export const deleteBook = async(request,response) => {
+export const deleteBook = async (request, response) => {
     try {
-        const {id} = request.params
-        await Book.deleteOne({_id:id})
-        return response.status(200).json({status:true,message:'Archivo Eliminado'})
-        
+        const { id } = request.params;
+        const book = await Book.findById(id);
+
+        if (book) {
+            // Eliminar la imagen de Cloudinary
+            await cloudinary.uploader.destroy(book.imagePublicId);
+
+            // Eliminar el libro de la base de datos
+            await Book.deleteOne({ _id: id });
+
+            return response.status(200).json({ status: true, message: 'Libro eliminado correctamente' });
+        } else {
+            return response.status(404).json({ status: false, message: 'Libro no encontrado' });
+        }
     } catch (error) {
-        return response(500).json({status:false,errors:[error.message]})
-        
+        return response.status(500).json({ status: false, errors: [error.message] });
     }
-}
-
-
+};
