@@ -9,8 +9,13 @@ export const SaveBook = async (request, response) => {
 
         const validacion = validar(title, cel, description, price, categoria, file, 'Y');
         if (validacion.length === 0) {
-            // Subir la imagen a Cloudinary
-            const result = await cloudinary.uploader.upload(file.path);
+            // Subir la imagen a Cloudinary con transformaciones para optimizar
+            const result = await cloudinary.uploader.upload(file.path, {
+                transformation: [
+                    { fetch_format: 'auto', quality: 'auto' },
+                    { width: 500, height: 500, crop: 'auto', gravity: 'auto' }
+                ]
+            });
 
             // Crear el nuevo libro con la URL y el public_id de la imagen en Cloudinary
             const newBook = new Book({
